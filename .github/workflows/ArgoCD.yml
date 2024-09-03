@@ -10,6 +10,7 @@ jobs:
           mkdir -p ${HOME}/.kube
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ${HOME}/.kube/config
           cat ${HOME}/.kube/config
+          kubectl config get-contexts
           kubectl config use-context do-nyc1-k8s-carlosvivas
     - name: Verificacion de ArgoCD
       run: echo "hola mundo"
