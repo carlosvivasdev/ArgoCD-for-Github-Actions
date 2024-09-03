@@ -19,3 +19,6 @@ jobs:
           echo "ArgoCD no está instalado o no se está ejecutando."
           exit 1
         fi
+    - name: Instalar ArgoCD
+      if: failure()
+      uses: ./.github/workflows/install-argocd.yml
