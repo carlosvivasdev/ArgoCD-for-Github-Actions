@@ -12,4 +12,10 @@ jobs:
           kubectl config get-contexts
           kubectl config use-context do-nyc1-k8s-carlosvivas
     - name: Verificacion de ArgoCD
-      run: echo "hola mundo"
+      run: |
+        if kubectl get pods -n argocd | grep -q "argocd-server"; then
+          echo "ArgoCD está instalado y ejecutándose."
+        else
+          echo "ArgoCD no está instalado o no se está ejecutando."
+          exit 1
+        fi
