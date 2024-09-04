@@ -3,7 +3,8 @@ on: [push]
 jobs:
   environment:
     name: Preparacion de entorno
-    runs-on: argoproj/argocli
+    runs-on: ubuntu-latest
+    container: argoproj/argocli
     steps:
     - name: Conexion a k8s
       run: |
@@ -30,3 +31,5 @@ jobs:
       if: failure()
       run: |
         password=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
+        argocd version
+        
