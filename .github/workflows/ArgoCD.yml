@@ -6,9 +6,6 @@ jobs:
     runs-on: ubuntu-latest
     container: argoproj/argocli
     steps:
-    - name: Instalar dependencias necesarias
-      run: |
-        apt-get update && apt-get install -y tail
     - name: Conexion a k8s
       run: |
           mkdir -p ${HOME}/.kube
@@ -30,8 +27,15 @@ jobs:
         kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
         kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "NodePort"}}'
         kubectl get svc -n argocd
+    - name: Instalar Argo CLI y dependencias
+      if: failure()
+      run: |
+        apt-get update && apt-get install -y curl
+        curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.8.0/argocd-linux-amd64
+        chmod +x /usr/local/bin/argocd
     - name: Configuracion de acceso a ARGOCD
       if: failure()
       run: |
         password=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
         argocd version
+        
