@@ -46,7 +46,7 @@ jobs:
         echo "EXTERNAL_IP=$EXTERNAL_IP" >> $GITHUB_ENV
         echo "NODEPORT=$NODEPORT" >> $GITHUB_ENV
         argocd login $EXTERNAL_IP:$NODEPORT --username admin --password $PASSWORD --insecure
-        argocd account update-password --account admin --current-password siu5UuoghALgi4-f --new-password HEP2024.
+        argocd account update-password --account admin --current-password $PASSWORD --new-password HEP2024.
 
     - name: ------------ Informacion de ArgoCD ------------
       run: echo "ArgoCD = https://$EXTERNAL_IP:$NODEPORT"
