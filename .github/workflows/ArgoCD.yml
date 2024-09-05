@@ -43,5 +43,10 @@ jobs:
         EXTERNAL_IP=$(kubectl get node -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}')
         NODEPORT=$(kubectl get svc argocd-server -n argocd -o json | jq -r '.spec.ports[] | select(.port==443) | .nodePort')
         PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
+        echo "EXTERNAL_IP=$EXTERNAL_IP" >> $GITHUB_ENV
+        echo "NODEPORT=$NODEPORT" >> $GITHUB_ENV
         argocd login $EXTERNAL_IP:$NODEPORT --username admin --password $PASSWORD --insecure
+        argocd account update-password --account admin --current-password siu5UuoghALgi4-f --new-password HEP2024.
 
+    - name: ------------ Informacion de ArgoCD ------------
+      run: echo "ArgoCD = https://$EXTERNAL_IP:$NODEPORT"
