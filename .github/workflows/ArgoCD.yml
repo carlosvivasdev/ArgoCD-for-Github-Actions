@@ -7,37 +7,38 @@ jobs:
     steps:
     - name: Conexion a k8s
       run: |
-          mkdir -p ${HOME}/.kube
-          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ${HOME}/.kube/config
-          kubectl config get-contexts
-          kubectl config use-context do-nyc1-k8s-carlosvivas
+        mkdir -p ${HOME}/.kube
+        echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ${HOME}/.kube/config
+        kubectl config get-contexts
+        kubectl config use-context do-nyc1-k8s-carlosvivas
 
     - name: Verificacion de ArgoCD
       id: check-argocd
       run: |
         if kubectl get pods -n argocd | grep -q "argocd-server"; then
           echo "ArgoCD está instalado y ejecutándose."
+          echo "outcome=success" >> $GITHUB_ENV
         else
           echo "ArgoCD no está instalado o no se está ejecutando."
-          exit 1
+          echo "outcome=failure" >> $GITHUB_ENV
         fi
 
     - name: Instalar ArgoCD
-      if: steps.check-argocd.outcome == 'failure'
+      if: env.outcome == 'failure'
       run: |
         kubectl get namespace argocd || kubectl create namespace argocd
         kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
         kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "NodePort"}}'
 
     - name: Instalar Argo CLI y dependencias
-      if: steps.check-argocd.outcome == 'failure'
+      if: env.outcome == 'failure'
       run: |
-        sudo apt-get update && sudo apt-get install -y curl
+        sudo apt-get update && sudo apt-get install -y curl jq
         sudo curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.8.0/argocd-linux-amd64
         sudo chmod +x /usr/local/bin/argocd
 
     - name: Configuracion de acceso a ArgoCD
-      if: steps.check-argocd.outcome == 'failure'
+      if: env.outcome == 'failure'
       run: |
         EXTERNAL_IP=$(kubectl get node -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}')
         NODEPORT=$(kubectl get svc argocd-server -n argocd -o json | jq -r '.spec.ports[] | select(.port==443) | .nodePort')
