@@ -11,7 +11,9 @@ jobs:
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ${HOME}/.kube/config
           kubectl config get-contexts
           kubectl config use-context do-nyc1-k8s-carlosvivas
+
     - name: Verificacion de ArgoCD
+      id: check-argocd
       run: |
         if kubectl get pods -n argocd | grep -q "argocd-server"; then
           echo "ArgoCD está instalado y ejecutándose."
@@ -19,21 +21,33 @@ jobs:
           echo "ArgoCD no está instalado o no se está ejecutando."
           exit 1
         fi
+
     - name: Instalar ArgoCD
-      if: failure()
+      if: steps.check-argocd.outcome == 'failure'
       run: |
         kubectl get namespace argocd || kubectl create namespace argocd
         kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
         kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "NodePort"}}'
-        kubectl get svc -n argocd
+
     - name: Instalar Argo CLI y dependencias
-      if: failure()
+      if: steps.check-argocd.outcome == 'failure'
       run: |
-        apt-get update && apt-get install -y curl
-        curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.8.0/argocd-linux-amd64
-        chmod +x /usr/local/bin/argocd
-    - name: Configuracion de acceso a ARGOCD
-      if: failure()
+        sudo apt-get update && sudo apt-get install -y curl
+        sudo curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.8.0/argocd-linux-amd64
+        sudo chmod +x /usr/local/bin/argocd
+
+    - name: Configuracion de acceso a ArgoCD
+      if: steps.check-argocd.outcome == 'failure'
       run: |
-        password=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
+        EXTERNAL_IP=$(kubectl get node -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}')
+        NODEPORT=$(kubectl get svc argocd-server -n argocd -o json | jq -r '.spec.ports[] | select(.port==443) | .nodePort')
+        PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
         argocd version
+        argocd login $EXTERNAL_IP:$NODEPORT --username admin --password $PASSWORD --insecure
+        argocd account update-password --account admin --current-password $PASSWORD --new-password admin
+
+    - name: Informacion de ArgoCD
+      run: |
+        EXTERNAL_IP=$(kubectl get node -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}')
+        NODEPORT=$(kubectl get svc argocd-server -n argocd -o json | jq -r '.spec.ports[] | select(.port==443) | .nodePort')
+        echo "ArgoCD URL: https://$EXTERNAL_IP:$NODEPORT"
