@@ -4,7 +4,6 @@ jobs:
   environment:
     name: Preparacion de entorno
     runs-on: ubuntu-latest
-    container: argoproj/argocli
     steps:
     - name: Conexion a k8s
       run: |
