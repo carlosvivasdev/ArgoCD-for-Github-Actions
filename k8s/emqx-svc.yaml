@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: emqx-svc
+#  namespace: dash-iot
+  labels:
+    app: emqx
+spec:
+  type: NodePort
+  ports:
+  - port: 1883
+    targetPort: 1883
+    nodePort: 30050
+    protocol: TCP
+    name: mqtt
+  - port: 8083
+    targetPort: 8083
+    nodePort: 30051
+    protocol: TCP
+    name: http
+  - port: 8084
+    targetPort: 8084
+    nodePort: 30052
+    protocol: TCP
+    name: ws
+  - port: 8883
+    targetPort: 8883
+    nodePort: 30053
+    protocol: TCP
+    name: mqtts
+  - port: 18083
+    targetPort: 18083
+    nodePort: 30054
+    protocol: TCP
+    name: dashboard
+  selector:
+    run: emqx-pod
