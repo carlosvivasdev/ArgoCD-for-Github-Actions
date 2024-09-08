@@ -66,7 +66,11 @@ jobs:
       run: argocd repo add https://github.com/duditas-xd/dash-iot-manifest.git --username carlosvivasdev --password ${{ secrets.GH_TOKEN }}
 
     - name: Crear proyecto en ArgoCD
-      run: argocd proj create dashiot -d https://kubernetes.default.svc,dashiot -s https://github.com/duditas-xd/dash-iot-manifest.git
+      run: |
+        argocd proj create dashiot \
+          -d https://kubernetes.default.svc,dashiot \
+          -s https://github.com/duditas-xd/dash-iot-manifest.git \
+          --allow-cluster-resource PersistentVolume
 
     - name: Crear namespace en k8s
       run: |
