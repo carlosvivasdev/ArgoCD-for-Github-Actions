@@ -38,6 +38,14 @@ jobs:
         kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
         kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "NodePort"}}'
 
+    - name: Obtener EXTERNAL_IP y NODEPORT
+      id: get-node-info
+      run: |
+        EXTERNAL_IP=$(kubectl get node -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}')
+        NODEPORT=$(kubectl get svc argocd-server -n argocd -o json | jq -r '.spec.ports[] | select(.port==443) | .nodePort')
+        echo "EXTERNAL_IP=$EXTERNAL_IP" >> $GITHUB_ENV
+        echo "NODEPORT=$NODEPORT" >> $GITHUB_ENV
+
     - name: Verificar o instalar Argo CLI
       run: |
         if ! command -v argocd > /dev/null; then
@@ -52,17 +60,13 @@ jobs:
     - name: Configurar acceso a ArgoCD si no instalado
       if: env.outcome == 'failure'
       run: |
-        EXTERNAL_IP=$(kubectl get node -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}')
-        NODEPORT=$(kubectl get svc argocd-server -n argocd -o json | jq -r '.spec.ports[] | select(.port==443) | .nodePort')
         PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
-        argocd login $EXTERNAL_IP:$NODEPORT --username admin --password $PASSWORD --insecure
+        argocd login ${{ env.EXTERNAL_IP }}:${{ env.NODEPORT }} --username admin --password $PASSWORD --insecure
         argocd account update-password --account admin --current-password $PASSWORD --new-password HEP2024.
-    
+
     - name: Login en ArgoCD
       run: |
-        EXTERNAL_IP=$(kubectl get node -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}')
-        NODEPORT=$(kubectl get svc argocd-server -n argocd -o json | jq -r '.spec.ports[] | select(.port==443) | .nodePort')
-        argocd login $EXTERNAL_IP:$NODEPORT --username admin --password HEP2024. --insecure
+        argocd login ${{ env.EXTERNAL_IP }}:${{ env.NODEPORT }} --username admin --password HEP2024. --insecure
 
     - name: Conectar repo de manifiesto a ArgoCD
       run: argocd repo add https://github.com/duditas-xd/dash-iot-manifest.git --username carlosvivasdev --password ${{ secrets.GH_TOKEN }}
@@ -75,7 +79,8 @@ jobs:
           --allow-cluster-resource PersistentVolume
 
     - name: Verificar o crear namespace 'dashiot'
-      run: kubectl get namespace dashiot || kubectl create namespace dashiot
+      run: |
+        kubectl get namespace dashiot || kubectl create namespace dashiot
 
     - name: Despliegue de EMQX
       run: |
@@ -88,6 +93,4 @@ jobs:
 
     - name: Informacion de ArgoCD
       run: |
-        EXTERNAL_IP=$(kubectl get node -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}')
-        NODEPORT=$(kubectl get svc argocd-server -n argocd -o json | jq -r '.spec.ports[] | select(.port==443) | .nodePort')
-        echo "ArgoCD = https://$EXTERNAL_IP:$NODEPORT"
+        echo "ArgoCD = https://${{ env.EXTERNAL_IP }}:${{ env.NODEPORT }}"
