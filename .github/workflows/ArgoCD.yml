@@ -85,7 +85,7 @@ jobs:
     - name: Despliegue de EMQX
       run: |
         argocd app create emqx \
-          --repo https://github.com/duditas-xd/dash-iot-manifest.git \
+          --repo ${{ vars.REPO_MANIFEST }} \
           --revision main --path ./k8s/emqx \
           --dest-server https://kubernetes.default.svc \
           --dest-namespace ${{ vars.NAMESPACE }} \
