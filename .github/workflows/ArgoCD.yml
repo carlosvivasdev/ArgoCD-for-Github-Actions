@@ -89,6 +89,7 @@ jobs:
           --revision main --path ./k8s/emqx \
           --dest-server https://kubernetes.default.svc \
           --dest-namespace ${{ vars.NAMESPACE }} \
+          --sync-policy automated \
           --project dash-iot
 
     - name: Informacion de ArgoCD
