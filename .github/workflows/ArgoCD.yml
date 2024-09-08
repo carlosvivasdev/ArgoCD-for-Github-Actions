@@ -30,8 +30,18 @@ jobs:
         kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
         kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "NodePort"}}'
 
+    - name: Comprobacion de ArgoCLI
+      run: |
+        if command -v argocd > /dev/null; then
+          echo "ArgoCLI está instalado."
+          echo "argocli_installed=true" >> $GITHUB_ENV
+        else
+          echo "ArgoCLI no está instalado."
+           echo "argocli_installed=false" >> $GITHUB_ENV
+        fi
+
     - name: Instalar Argo CLI y dependencias
-      if: env.outcome == 'failure'
+      if: env.argocli_installed == 'false'
       run: |
         sudo apt-get update && sudo apt-get install -y curl jq
         sudo curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.8.0/argocd-linux-amd64
@@ -46,24 +56,33 @@ jobs:
         argocd login $EXTERNAL_IP:$NODEPORT --username admin --password $PASSWORD --insecure
         argocd account update-password --account admin --current-password $PASSWORD --new-password HEP2024.
 
+    - name: Coneccion a repositorio de manifiesto
+      run: argocd repo add https://github.com/duditas-xd/dash-iot-manifest.git --username carlosvivasdev --password 
+
+    - name: Crear proyecto en ArgoCD
+      run: argocd proj create dashiot -d https://kubernetes.default.svc,dashiot -s https://github.com/duditas-xd/dash-iot-manifest.git
+
+    - name: Crear namespace en k8s
+      run: |
+        if kubectl get namespace dashiot; then
+          echo "El namespace 'dashiot' ya existe";
+        else
+          kubectl create namespace dashiot;
+          echo "Namespace 'dashiot' creado";
+        fi
+
+    #despliegue de aplicaciones
+    - name: Despliegue de EMQX
+      run: |
+        argocd app create emqx \
+          --repo https://github.com/duditas-xd/dash-iot-manifest.git
+          --revision main --path ./k8s/emqx
+          --dest-server https://kubernetes.default.svc
+          --dest-namespace dashiot
+          --project dashiot
+        
     - name: ------------ Informacion de ArgoCD ------------
       run: |
         EXTERNAL_IP=$(kubectl get node -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}')
         NODEPORT=$(kubectl get svc argocd-server -n argocd -o json | jq -r '.spec.ports[] | select(.port==443) | .nodePort')
         echo "ArgoCD = https://$EXTERNAL_IP:$NODEPORT"
-  environment-config:
-    name: Configuracion de entorno
-    runs-on: ubuntu-latest
-    steps:
-      - name: Comprobacion de ArgoCLI
-        run: |
-          if command -v argocd > /dev/null; then
-            echo "ArgoCLI está instalado."
-            echo "argocli_installed=true" >> $GITHUB_ENV
-          else
-            echo "ArgoCLI no está instalado."
-            echo "argocli_installed=false" >> $GITHUB_ENV
-          fi
-      - name: Comprobacion
-        run: argocd version
-            
