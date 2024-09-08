@@ -70,7 +70,7 @@ jobs:
         argocd login ${{ env.EXTERNAL_IP }}:${{ env.NODEPORT }} --username admin --password ${{ secrets.ARGO_PASSWORD }} --insecure
 
     - name: Conectar repo de manifiesto a ArgoCD
-      run: argocd repo add ${{ github.REPO_MANIFEST }} --password ${{ secrets.GH_TOKEN }}
+      run: argocd repo add ${{ vars.REPO_MANIFEST }} --password ${{ secrets.GH_TOKEN }}
 
     - name: Crear proyecto en ArgoCD
       run: |
