@@ -76,6 +76,7 @@ jobs:
       run: |
         argocd proj create dash-iot \
           -d https://kubernetes.default.svc,${{ vars.NAMESPACE }} \
+          -s * \
           --allow-cluster-resource PersistentVolume
 
     - name: Verificar y crear namespace
