@@ -81,12 +81,27 @@ jobs:
 
     - name: Verificar y crear namespace
       run: kubectl get namespace ${{ vars.NAMESPACE }} || kubectl create namespace ${{ vars.NAMESPACE }}
+    
+    - name: Crear secretos
+      run: |
+        kubectl get secret ghcr-login-secret -n ${{ vars.NAMESPACE }} || \
+        kubectl create secret docker-registry ghcr-login-secret -n ${{ vars.NAMESPACE }} --docker-server=https://ghcr.io --docker-username=carlosvivasdev --docker-password=${{ secrets.GH_TOKEN }}
 
     - name: Despliegue de EMQX
       run: |
         argocd app create emqx \
           --repo ${{ vars.REPO_MANIFEST }} \
           --revision main --path ./k8s/emqx \
+          --dest-server https://kubernetes.default.svc \
+          --dest-namespace ${{ vars.NAMESPACE }} \
+          --sync-policy automated \
+          --project dash-iot
+
+    - name: Despliegue de api-dash
+      run: |
+        argocd app create api-dash \
+          --repo ${{ vars.REPO_MANIFEST }} \
+          --revision main --path ./k8s/api-dash \
           --dest-server https://kubernetes.default.svc \
           --dest-namespace ${{ vars.NAMESPACE }} \
           --sync-policy automated \
