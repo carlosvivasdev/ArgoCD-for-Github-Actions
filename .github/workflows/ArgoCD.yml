@@ -109,3 +109,4 @@ jobs:
 
     - name: Informacion de ArgoCD
       run: echo "ArgoCD = https://${{ env.EXTERNAL_IP }}:${{ env.NODEPORT }}"
+ 
