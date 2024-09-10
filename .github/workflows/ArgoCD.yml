@@ -85,7 +85,7 @@ jobs:
     - name: Crear secretos
       run: |
         kubectl get secret ghcr-login-secret -n ${{ vars.NAMESPACE }} || \
-        kubectl create secret docker-registry ghcr-login-secret -n ${{ vars.NAMESPACE }} --docker-server=https://ghcr.io --docker-username=carlosvivasdev --docker-password=${{ secrets.GH_TOKEN }}
+        kubectl create secret docker-registry ghcr-login-secret -n ${{ vars.NAMESPACE }} --docker-server=https://ghcr.io --docker-username=${{ github.actor }} --docker-password=${{ secrets.GH_TOKEN }}
 
     - name: Despliegue de EMQX
       run: |
