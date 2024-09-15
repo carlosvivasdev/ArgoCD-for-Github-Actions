@@ -106,6 +106,16 @@ jobs:
           --dest-namespace ${{ vars.NAMESPACE }} \
           --sync-policy automated \
           --project dash-iot
+    
+    - name: Despliegue de api-dash
+      run: |
+        argocd app create grafana \
+          --repo ${{ vars.REPO_MANIFEST }} \
+          --revision main --path ./k8s/grafana \
+          --dest-server https://kubernetes.default.svc \
+          --dest-namespace ${{ vars.NAMESPACE }} \
+          --sync-policy automated \
+          --project dash-iot
 
     - name: Informacion de ArgoCD
       run: echo "ArgoCD = https://${{ env.EXTERNAL_IP }}:${{ env.NODEPORT }}"
