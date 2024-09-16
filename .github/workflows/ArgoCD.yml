@@ -95,6 +95,8 @@ jobs:
           --dest-server https://kubernetes.default.svc \
           --dest-namespace ${{ vars.NAMESPACE }} \
           --sync-policy automated \
+          --auto-prune \
+          --self-heal \
           --project dash-iot
 
     - name: Despliegue de api-dash
@@ -105,9 +107,11 @@ jobs:
           --dest-server https://kubernetes.default.svc \
           --dest-namespace ${{ vars.NAMESPACE }} \
           --sync-policy automated \
+          --auto-prune \
+          --self-heal \
           --project dash-iot
     
-    - name: Despliegue de api-dash
+    - name: Despliegue de Grafana
       run: |
         argocd app create grafana \
           --repo ${{ vars.REPO_MANIFEST }} \
@@ -115,6 +119,8 @@ jobs:
           --dest-server https://kubernetes.default.svc \
           --dest-namespace ${{ vars.NAMESPACE }} \
           --sync-policy automated \
+          --auto-prune \
+          --self-heal \
           --project dash-iot
 
     - name: Informacion de ArgoCD
