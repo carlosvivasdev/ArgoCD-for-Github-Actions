@@ -97,6 +97,7 @@ jobs:
           --sync-policy automated \
           --auto-prune \
           --self-heal \
+          --upsert \
           --project dash-iot
 
     - name: Despliegue de api-dash
@@ -109,6 +110,7 @@ jobs:
           --sync-policy automated \
           --auto-prune \
           --self-heal \
+          --upsert \
           --project dash-iot
     
     - name: Despliegue de Grafana
@@ -121,6 +123,7 @@ jobs:
           --sync-policy automated \
           --auto-prune \
           --self-heal \
+          --upsert \
           --project dash-iot
 
     - name: Informacion de ArgoCD
