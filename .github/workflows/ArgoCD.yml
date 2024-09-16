@@ -112,7 +112,20 @@ jobs:
           --self-heal \
           --upsert \
           --project dash-iot
-    
+
+    - name: Despliegue de Postgres
+      run: |
+        argocd app create grafana \
+          --repo ${{ vars.REPO_MANIFEST }} \
+          --revision main --path ./k8s/postgres \
+          --dest-server https://kubernetes.default.svc \
+          --dest-namespace ${{ vars.NAMESPACE }} \
+          --sync-policy automated \
+          --auto-prune \
+          --self-heal \
+          --upsert \
+          --project dash-iot
+
     - name: Despliegue de Grafana
       run: |
         argocd app create grafana \
