@@ -6,8 +6,6 @@ jobs:
     name: Preparacion de entorno
     runs-on: ubuntu-latest
     steps:
-    - name: repo
-      uses: actions/checkout@v4  
     - name: Cache de dependencias
       uses: actions/cache@v4
       with:
@@ -104,7 +102,16 @@ jobs:
 
     - name: Despliegue de api-dash
       run: |
-        argocd app create -f "./argocd/api-dash.yaml"
+        argocd app create api-dash \
+          --repo ${{ vars.REPO_MANIFEST }} \
+          --revision main --path ./k8s/api-dash \
+          --dest-server https://kubernetes.default.svc \
+          --dest-namespace ${{ vars.NAMESPACE }} \
+          --sync-policy automated \
+          --auto-prune \
+          --self-heal \
+          --upsert \
+          --project dash-iot \
 
     - name: Despliegue de Grafana
       run: |
