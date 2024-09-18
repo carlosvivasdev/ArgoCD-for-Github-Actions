@@ -104,7 +104,7 @@ jobs:
 
     - name: Despliegue de api-dash
       run: |
-        argocd app create -f "./argocd/api-dash"
+        argocd app create -f "./argocd/api-dash.yaml"
 
     - name: Despliegue de Grafana
       run: |
