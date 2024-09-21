@@ -34,4 +34,4 @@ spec:
     protocol: TCP
     name: dashboard
   selector:
-    run: emqx-pod
+    app: emqx

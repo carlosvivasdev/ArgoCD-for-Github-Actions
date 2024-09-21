@@ -1,0 +1,30 @@
+name: Deploy actualization
+on:
+  repository_dispatch:
+    types: trigger-workflow
+
+jobs:
+  UpdateImage:
+    name: Preparacion de entorno
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get IMAGE_TAG from previous workflow
+        run: echo "IMAGE_TAG=${{ github.event.client_payload.image_tag }}">> $GITHUB_ENV
+      - name: Actualizar imagen en los manifiestos
+        run: 'sed -i "s|image:.*|image: $IMAGE_TAG|g" ./k8s/api-dash/api-deployment.yaml'
+      - name: Nueva imagen agregada
+        run: cat ./k8s/api-dash/api-deployment.yaml | grep "image:"
+      - name: Subiendo cambios al repositorio de Manifiestos
+        run: |
+          CHANGES=$(git status --porcelain | wc -l)
+          if [ "$CHANGES" -gt "0" ]; then
+            git status
+            git config --global user.name "${{ github.actor }}"
+            git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+            git add --all
+            git commit -m "Update image tag $IMAGE_TAG"
+            git push https://${{ github.actor }}:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
+          fi
+

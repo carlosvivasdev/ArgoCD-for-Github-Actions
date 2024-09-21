@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: emqx
+  labels:
+    app: emqx
+#  namespace: dash-iot
+spec:
+  replicas: 1 
+  selector:
+    matchLabels:
+      app: emqx
+  template:
+    metadata:
+      labels:
+        app: emqx
+    spec:
+      containers:
+      - image: emqx/emqx:5.8-elixir
+        name: emqx
+        securityContext:
+          runAsUser: 0
+        ports:
+        - containerPort: 1883
+          name: mqtt
+        - containerPort: 8083
+          name: http
+        - containerPort: 8084
+          name: ws
+        - containerPort: 8883
+          name: mqtts
+        - containerPort: 18083
+          name: dashboard
+        volumeMounts:
+        - name: emqx-data
+          mountPath: /opt/emqx/data
+      volumes:
+      - name: emqx-data
+        persistentVolumeClaim:
+          claimName: emqx-data-pvc
+      restartPolicy: Always

@@ -1,5 +1,5 @@
 name: GitHub CI/CD
-on: [push]
+#on: [push]
 
 jobs:
   environment:
@@ -83,10 +83,8 @@ jobs:
       run: kubectl get namespace ${{ vars.NAMESPACE }} || kubectl create namespace ${{ vars.NAMESPACE }}
     
     - name: Crear secretos
-      run: |
-        kubectl get secret ghcr-login-secret -n ${{ vars.NAMESPACE }} || kubectl create secret docker-registry ghcr-login-secret -n ${{ vars.NAMESPACE }} --docker-server=https://ghcr.io --docker-username=${{ github.actor }} --docker-password=${{ secrets.GH_TOKEN }}
-        kubectl get secret ghcr-login-secret -n argocd || kubectl create secret docker-registry ghcr-login-secret -n argocd --docker-server=https://ghcr.io --docker-username=${{ github.actor }} --docker-password=${{ secrets.GH_TOKEN }}
-
+      run: kubectl get secret ghcr-login-secret -n ${{ vars.NAMESPACE }} || kubectl create secret docker-registry ghcr-login-secret -n ${{ vars.NAMESPACE }} --docker-server=https://ghcr.io --docker-username=${{ github.actor }} --docker-password=${{ secrets.GH_TOKEN }}
+      
     - name: Despliegue de EMQX
       run: |
         argocd app create emqx \

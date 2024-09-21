@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  labels:
+    app: grafana
+spec:
+  replicas: 1  
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - image: grafana/grafana-oss:11.2.0
+        name: grafana
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+          - name: grafana-storage
+            mountPath: /var/lib/grafana/
+          - name: grafana-dashboards-configmap
+            mountPath: /etc/grafana/provisioning/dashboards/
+          - name: grafana-datasources-configmap
+            mountPath: /etc/grafana/provisioning/datasources/
+        envFrom:
+        - secretRef:
+            name: env-secret-k8s
+      volumes:
+      - name: grafana-storage
+        persistentVolumeClaim:
+          claimName: grafana-data-pvc
+      - name: grafana-dashboards-configmap
+        configMap:
+          name: grafana-dashboards
+      - name: grafana-datasources-configmap
+        configMap:
+          name: grafana-datasources
+      restartPolicy: Always
