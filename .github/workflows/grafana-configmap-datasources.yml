@@ -1,0 +1,42 @@
+name: ConfigMap Grafana K8S (Datasourse)
+# on:
+#   workflow_run:
+#     workflows: ["Varibles K8S"]
+#     types:
+#       - completed
+#   push:
+#     paths: 
+#       - '.github/workflows/grafana-configmap-datasources.yml'
+#       - 'grafana/datasources/**'
+jobs:
+  update-configmap:
+    name: Conexion con k8s
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Conexion a k8s
+        run: |
+          mkdir -p ${HOME}/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ${HOME}/.kube/config
+          cat ${HOME}/.kube/config
+          kubectl config use-context do-nyc1-k8s-carlosvivas
+
+      - name: Verificar y crear namespace
+        run: kubectl get namespace ${{ vars.NAMESPACE }} || kubectl create namespace ${{ vars.NAMESPACE }}
+
+      - name: Create new configmap
+        run: |
+          if kubectl get configmap grafana-datasources -n "${{ vars.NAMESPACE }}" > /dev/null 2>&1; then
+            echo "ConfigMap existente, eliminando..."
+            kubectl delete configmap grafana-datasources -n "${{ vars.NAMESPACE }}"
+          fi
+          echo "Creando nuevo ConfigMap..."
+          kubectl create configmap grafana-datasources -n "${{ vars.NAMESPACE }}" --from-file=./grafana/datasources/.
+      - name: Aplicar nuevos cambios
+        run: |
+          if kubectl get deployment grafana -n "${{ vars.NAMESPACE }}" > /dev/null 2>&1; then
+            echo "Deployment de Grafana encontrado, reiniciando..."
+            kubectl rollout restart deployment grafana -n "${{ vars.NAMESPACE }}"
+          else
+            echo "Aun no se ha creado Grafana en k8s"
+          fi
